@@ -1,0 +1,861 @@
+{
+  "name": "Law Firm Automation (Intake, Cases, Notices, Reminders)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Client Intake - Law Firm (Demo)",
+        "formDescription": "Please share your details. Use fake/sample data only in this demo.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "fieldName": "clientName",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone",
+              "fieldName": "phone",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "fieldName": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Case Type",
+              "fieldType": "dropdown",
+              "fieldName": "caseTypeChosen",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Property Dispute"
+                  },
+                  {
+                    "option": "Family Law"
+                  },
+                  {
+                    "option": "Contract / Commercial"
+                  },
+                  {
+                    "option": "Tenant / Rent"
+                  },
+                  {
+                    "option": "Debt Recovery"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Problem / Issue",
+              "fieldType": "textarea",
+              "fieldName": "issue",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Opposing Party",
+              "fieldName": "opposingParty"
+            },
+            {
+              "fieldLabel": "Important Date (hearing / deadline)",
+              "fieldType": "date",
+              "fieldName": "importantDate"
+            },
+            {
+              "fieldLabel": "Preferred Contact Method",
+              "fieldType": "dropdown",
+              "fieldName": "preferredContact",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Email"
+                  },
+                  {
+                    "option": "Phone"
+                  },
+                  {
+                    "option": "WhatsApp"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "path": "law-firm-intake",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Thank you. Your request has been received and a lawyer will review it shortly."
+            }
+          }
+        }
+      },
+      "id": "59e396fd-fad9-41e7-a58f-1b4750c46f4c",
+      "name": "Client Intake Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -416,
+        32
+      ],
+      "webhookId": "26fd1a9a-8ca2-4cd9-ad56-0ce1373c381c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Client issue: {{ $json.issue }}\nCase type chosen by client: {{ $json.caseTypeChosen }}\nOpposing party: {{ $json.opposingParty }}\nImportant date: {{ $json.importantDate }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an intake assistant for a law firm. You do NOT give legal advice. Classify the case into one of: Property Dispute, Family Law, Contract / Commercial, Tenant / Rent, Debt Recovery, Other. Set urgency to High, Normal or Low (High if a deadline is within 14 days or there is risk of loss or harm). Write a neutral two sentence summary and one suggested administrative next step for the lawyer."
+        }
+      },
+      "id": "497ac48b-9c86-496b-aa9c-f63b56dfc816",
+      "name": "AI Case Triage",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -224,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a1163ff1-2a7d-44b2-a16d-2b68dbd8754c",
+      "name": "Gemini Triage Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \"caseType\": \"Property Dispute\", \"urgency\": \"High\", \"summary\": \"Two sentence neutral summary\", \"suggestedNextStep\": \"Collect land ownership documents\" }"
+      },
+      "id": "d16126a6-3734-4260-8efd-5ded98b4c9e4",
+      "name": "Triage Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "caseId",
+              "value": "=CASE-{{ $now.toFormat(\"yyyyMMdd-HHmm\") }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "clientName",
+              "value": "={{ $(\"Client Intake Form\").item.json.clientName }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "phone",
+              "value": "={{ $(\"Client Intake Form\").item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "email",
+              "value": "={{ $(\"Client Intake Form\").item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "issue",
+              "value": "={{ $(\"Client Intake Form\").item.json.issue }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "opposingParty",
+              "value": "={{ $(\"Client Intake Form\").item.json.opposingParty ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "importantDate",
+              "value": "={{ $(\"Client Intake Form\").item.json.importantDate ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a8",
+              "name": "preferredContact",
+              "value": "={{ $(\"Client Intake Form\").item.json.preferredContact ?? \"Email\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a9",
+              "name": "caseType",
+              "value": "={{ $json.output.caseType }}",
+              "type": "string"
+            },
+            {
+              "id": "a10",
+              "name": "urgency",
+              "value": "={{ $json.output.urgency }}",
+              "type": "string"
+            },
+            {
+              "id": "a11",
+              "name": "summary",
+              "value": "={{ $json.output.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "a12",
+              "name": "nextStep",
+              "value": "={{ $json.output.suggestedNextStep }}",
+              "type": "string"
+            },
+            {
+              "id": "a13",
+              "name": "lawyer",
+              "value": "={{ ({\"Property Dispute\":\"Adv. Bilal Ahmed\",\"Tenant / Rent\":\"Adv. Bilal Ahmed\",\"Family Law\":\"Adv. Sana Malik\",\"Contract / Commercial\":\"Adv. Hamza Raza\",\"Debt Recovery\":\"Adv. Hamza Raza\"})[$json.output.caseType] ?? \"Adv. Bilal Ahmed\" }}",
+              "type": "string"
+            },
+            {
+              "id": "a14",
+              "name": "clickUpPriority",
+              "value": "={{ $json.output.urgency === \"High\" ? 2 : ($json.output.urgency === \"Low\" ? 4 : 3) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2049ac3-34d2-4e63-bc0a-9aec0e7553ec",
+      "name": "Assign Case Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "folderless": true,
+        "name": "={{ $json.caseId }} | {{ $json.clientName }} | {{ $json.caseType }}",
+        "additionalFields": {
+          "content": "=Lawyer: {{ $json.lawyer }}\nClient: {{ $json.clientName }} ({{ $json.phone }}, {{ $json.email }})\nPreferred contact: {{ $json.preferredContact }}\nOpposing party: {{ $json.opposingParty }}\nUrgency: {{ $json.urgency }}\n\nSummary: {{ $json.summary }}\n\nSuggested next step: {{ $json.nextStep }}\n\nOriginal issue: {{ $json.issue }}",
+          "dueDate": "={{ $json.importantDate }}",
+          "priority": "={{ $json.clickUpPriority }}"
+        }
+      },
+      "id": "533e95a1-ea2e-4547-a0c9-68f8989ae279",
+      "name": "Create ClickUp Case",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        304,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $(\"Assign Case Details\").item.json.caseId }} - {{ $(\"Assign Case Details\").item.json.clientName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "options": {}
+      },
+      "id": "ae76b394-1011-4862-8a9b-fd3fbcab012e",
+      "name": "Create Drive Case Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        528,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "rajaharoonaftab2000@gmail.com",
+        "subject": "=New case assigned: {{ $(\"Assign Case Details\").item.json.caseId }} ({{ $(\"Assign Case Details\").item.json.urgency }} urgency)",
+        "message": "=<h3>New case for {{ $(\"Assign Case Details\").item.json.lawyer }}</h3><p><b>Case:</b> {{ $(\"Assign Case Details\").item.json.caseId }} - {{ $(\"Assign Case Details\").item.json.caseType }}</p><p><b>Client:</b> {{ $(\"Assign Case Details\").item.json.clientName }}</p><p><b>Summary:</b> {{ $(\"Assign Case Details\").item.json.summary }}</p><p><b>Suggested next step:</b> {{ $(\"Assign Case Details\").item.json.nextStep }}</p><p><a href=\"{{ $(\"Create ClickUp Case\").item.json.url }}\">Open in ClickUp</a></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "26859ce8-1a94-466f-b11b-103cfe63c339",
+      "name": "Email Lawyer New Case",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        48
+      ],
+      "webhookId": "a33009a4-9851-4749-9518-420262777f25"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Assign Case Details\").item.json.email }}",
+        "subject": "=We received your request - Reference {{ $(\"Assign Case Details\").item.json.caseId }}",
+        "message": "=<p>Dear {{ $(\"Assign Case Details\").item.json.clientName }},</p><p>Thank you for contacting us. Your request has been registered under reference <b>{{ $(\"Assign Case Details\").item.json.caseId }}</b> and assigned to {{ $(\"Assign Case Details\").item.json.lawyer }}, who will contact you via {{ $(\"Assign Case Details\").item.json.preferredContact }}.</p><p>This message is an acknowledgement only and is not legal advice.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "432e699b-fb08-408a-9ce9-16bff60059c0",
+      "name": "Email Client Confirmation",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        48
+      ],
+      "webhookId": "885da09a-536c-4bd4-84aa-11326bc0c131",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2ASHTOePJUC9xiGJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Case: {{ $(\"Assign Case Details\").item.json.caseType }}\nClient: {{ $(\"Assign Case Details\").item.json.clientName }}\nOpposing party: {{ $(\"Assign Case Details\").item.json.opposingParty }}\nFacts: {{ $(\"Assign Case Details\").item.json.issue }}\nLawyer: {{ $(\"Assign Case Details\").item.json.lawyer }}\nDate: {{ $now.toFormat(\"dd MMMM yyyy\") }}",
+        "options": {
+          "systemMessage": "You are a drafting assistant for a lawyer. Write a short DRAFT formal legal notice (plain text, about 150 words) suitable for the case type, based only on the facts given. Use placeholders like [AMOUNT] or [ADDRESS] where facts are missing. Start with the line \"DRAFT - FOR LAWYER REVIEW ONLY\". Do not cite specific laws or give legal advice."
+        }
+      },
+      "id": "55484c31-153a-4519-af5c-2f0928d62f8e",
+      "name": "AI Notice Drafter",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1152,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "id": "139c5e26-bb84-4594-97fd-ca3e1d852f92",
+      "name": "Gemini Drafting Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1216,
+        272
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "51PSfbc8im2ZMlNC",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "team": "1100370000001475",
+        "space": "1100370000011383",
+        "folderless": true,
+        "list": "1100370000014339",
+        "name": "=NOTICE DRAFT | {{ $(\"Assign Case Details\").item.json.caseId }} | {{ $(\"Assign Case Details\").item.json.caseType }} | {{ $(\"Assign Case Details\").item.json.opposingParty }}",
+        "additionalFields": {
+          "content": "={{ $json.output }}"
+        }
+      },
+      "id": "99ce1c9b-7926-4be1-9d9e-e4cf245bf602",
+      "name": "Create ClickUp Notice Draft",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        48
+      ],
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "vYrMeZGlVPIoGHej",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "6213818922",
+        "message": "=Approve this notice to be emailed to the client?\n\nCase: {{ $(\"Assign Case Details\").item.json.caseId }}\n\n{{ $(\"AI Notice Drafter\").item.json.output }}",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approve and send",
+            "disapproveLabel": "Reject"
+          }
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "660e9532-018e-4a5b-9761-794ad905e180",
+      "name": "Lawyer Approval on Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        48
+      ],
+      "webhookId": "fefdfa62-cacf-4e85-beea-ced9122cecac"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.data.approved }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "43e9c936-b542-41f1-9057-6a811a22dc22"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "5e84d274-35d3-4d1c-a331-b9b3c4787b56",
+      "name": "Lawyer Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1872,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Assign Case Details\").item.json.email }}",
+        "subject": "=Update on your matter - {{ $(\"Assign Case Details\").item.json.caseId }}",
+        "message": "=<p>Dear {{ $(\"Assign Case Details\").item.json.clientName }},</p><p>Your lawyer has reviewed and approved the following document:</p><blockquote>{{ $(\"AI Notice Drafter\").item.json.output.split(\"\\n\").join(\"<br>\") }}</blockquote>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d9d1de67-5a5a-4ded-91a5-f2a34d2496a2",
+      "name": "Email Approved Notice to Client",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        -48
+      ],
+      "webhookId": "fa3a3983-43be-48f0-ae47-25bcbcde6d3f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2ASHTOePJUC9xiGJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "rajaharoonaftab2000@gmail.com",
+        "subject": "=Notice rejected - revise draft for {{ $(\"Assign Case Details\").item.json.caseId }}",
+        "message": "=<p>The draft notice for {{ $(\"Assign Case Details\").item.json.caseId }} was rejected and nothing was sent to the client. Please revise it in ClickUp: {{ $(\"Create ClickUp Notice Draft\").item.json.url }}</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "ec8350fa-3b8d-484a-bf32-e55fec6ed1db",
+      "name": "Email Lawyer Revision Needed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2096,
+        144
+      ],
+      "webhookId": "6210694c-585a-466f-b94f-c7e4183d92bb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2ASHTOePJUC9xiGJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "id": "a0cc062e-ffab-42ab-bb2b-d23df40c1a09",
+      "name": "Daily 8 AM Hearing Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "getAll",
+        "team": "1100370000001475",
+        "space": "1100370000011383",
+        "folderless": true,
+        "list": "1100370000014339",
+        "filters": {
+          "dueDateGt": "={{ $now.toMillis() }}",
+          "dueDateLt": "={{ $now.plus({ days: 7 }).toMillis() }}"
+        }
+      },
+      "id": "c7691a5a-ce40-4b57-8446-9546a5320d61",
+      "name": "Get Hearings Next 7 Days",
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        352
+      ],
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "vYrMeZGlVPIoGHej",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6213818922",
+        "text": "=Hearing within 7 days: {{ $json.name }}\nDate: {{ new Date(Number($json.due_date)).toDateString() }}\n{{ $json.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "234e61de-c7ba-4ec3-878c-2dde194f13f9",
+      "name": "Telegram Hearing Reminder",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        352
+      ],
+      "webhookId": "0c21228b-0d17-4086-a879-a737ca68e30d",
+      "credentials": {
+        "telegramApi": {
+          "id": "W4Rf7QoLzCkfNx6b",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "rh706303@gmail.com",
+        "subject": "=Hearing reminder: {{ $(\"Get Hearings Next 7 Days\").item.json.name }}",
+        "message": "=<p>Upcoming hearing within 7 days: <b>{{ $(\"Get Hearings Next 7 Days\").item.json.name }}</b><br>Date: {{ new Date(Number($(\"Get Hearings Next 7 Days\").item.json.due_date)).toDateString() }}<br><a href=\"{{ $(\"Get Hearings Next 7 Days\").item.json.url }}\">Open in ClickUp</a></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "0cfce47d-6942-449e-abf6-624926e3947e",
+      "name": "Email Hearing Reminder",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        352
+      ],
+      "webhookId": "ba7e8e76-640f-4bda-bd78-ffec64c00a55",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2ASHTOePJUC9xiGJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Flow 1 - Intake to approved notice\nForm > AI triage > ClickUp case > Drive folder > lawyer + client emails > AI notice draft > Telegram approval > client email. Demo/fake data only. AI never sends a notice without lawyer approval.",
+        "height": 176,
+        "width": 304,
+        "color": 4
+      },
+      "id": "8cb0666f-49dc-4175-896e-04120adaa5be",
+      "name": "Sticky Note 20552d9e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Flow 2 - Hearing reminders\nEvery morning: ClickUp hearings due in the next 7 days > Telegram + Gmail reminder.",
+        "width": 272,
+        "color": 5
+      },
+      "id": "5a263a3a-63f8-4090-a56f-9822b2b530b7",
+      "name": "Sticky Note 16b9db34",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        672,
+        544
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Client Intake Form": {
+      "main": [
+        [
+          {
+            "node": "AI Case Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Case Triage": {
+      "main": [
+        [
+          {
+            "node": "Assign Case Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Triage Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Case Triage",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Triage Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Case Triage",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign Case Details": {
+      "main": [
+        [
+          {
+            "node": "Create ClickUp Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Case": {
+      "main": [
+        [
+          {
+            "node": "Create Drive Case Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Drive Case Folder": {
+      "main": [
+        [
+          {
+            "node": "Email Lawyer New Case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Lawyer New Case": {
+      "main": [
+        [
+          {
+            "node": "Email Client Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Client Confirmation": {
+      "main": [
+        [
+          {
+            "node": "AI Notice Drafter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Notice Drafter": {
+      "main": [
+        [
+          {
+            "node": "Create ClickUp Notice Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Drafting Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Notice Drafter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ClickUp Notice Draft": {
+      "main": [
+        [
+          {
+            "node": "Lawyer Approval on Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lawyer Approval on Telegram": {
+      "main": [
+        [
+          {
+            "node": "Lawyer Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lawyer Approved?": {
+      "main": [
+        [
+          {
+            "node": "Email Approved Notice to Client",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Lawyer Revision Needed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 8 AM Hearing Check": {
+      "main": [
+        [
+          {
+            "node": "Get Hearings Next 7 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Hearings Next 7 Days": {
+      "main": [
+        [
+          {
+            "node": "Telegram Hearing Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Hearing Reminder": {
+      "main": [
+        [
+          {
+            "node": "Email Hearing Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "0c745a91-baa6-4536-a175-01148d115107",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1afb6aab3770da28edd93afb11e067ae0dd5545efbb2d08a1dd75a767c9cb8d3"
+  },
+  "nodeGroups": [],
+  "id": "LEfpnb6WYvbZ1M96",
+  "tags": []
+}
